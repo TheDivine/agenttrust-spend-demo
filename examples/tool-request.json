@@ -1,0 +1,1 @@
+{"principal":"demo-agent","tool":"http.get","destination":"https://example.com/docs","amountCents":1200}

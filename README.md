@@ -1,6 +1,6 @@
 # AgentTrust — local spending authorization prototype
 
-Experimental open-source prototype. Working name only. This demonstrates policy-controlled AI-agent spending with simulated payments. It is not a production financial service, malware scanner, or general agent firewall.
+Experimental open-source prototype. Working name only. This demonstrates policy-controlled AI-agent spending with simulated payments. It is not a production financial service, comprehensive malware detector, or general agent firewall. A local heuristic artifact inspector and policy-gate demonstration are also included.
 
 ## Run on Ubuntu, Windows or macOS
 
@@ -76,10 +76,25 @@ What paid tools do your agents use today? Where do approvals block your workflow
 ## Roadmap
 
 - Implemented: local spend simulator, deterministic decisions, manual approvals, signed receipts and tests.
-- Next: independent verifier and scoped machine authorizations.
+- Implemented: local artifact manifest/digest inspection, explicit review records, change detection and hypothetical tool-request policy decisions.
+- Next: independent signed-receipt verifier and authenticated scoped machine authorizations.
 - Research: approvals bound to exact skill/artifact digests, integrating existing scanners, runtime enforcement.
-- Not implemented: skill scanning, malware detection, npm inspection, provider settlement or blockchain anchoring.
+- Not implemented: comprehensive skill/malware detection, registry/dependency analysis, runtime firewall enforcement, provider settlement or blockchain anchoring.
 
 ## License
 
 MIT. See LICENSE. Hosted services and additional commercial features may be developed separately. The published code remains governed by its license.
+
+
+## Inspect a skill and evaluate a tool request
+
+See [artifact-gate.md](docs/artifact-gate.md) for commands, expected outcomes and important trust limitations. The inspector checks local content with a small heuristic rule set and hashes. It does not execute the inspected skill. The policy gate returns a decision only; it is not a network firewall or sandbox.
+
+```bash
+node tools/trust.mjs inspect examples/skills/hello
+node tools/trust.mjs approve examples/skills/hello ./demo-approval.json local-reviewer
+node tools/trust.mjs verify examples/skills/hello ./demo-approval.json
+node tools/trust.mjs gate examples/skills/hello ./demo-approval.json examples/tool-request.json examples/gate-policy.json
+```
+
+All 13 automated tests passed locally at this milestone. See GitHub Actions for hosted results; no security audit or production-readiness claim is implied.
