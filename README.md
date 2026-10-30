@@ -2,6 +2,25 @@
 
 Experimental open-source prototype. Working name only. This demonstrates policy-controlled AI-agent spending with simulated payments. It is not a production financial service, comprehensive malware detector, or general agent firewall. A local heuristic artifact inspector and policy-gate demonstration are also included.
 
+## Enforced executor experiment
+
+The new CLI/library path connects a captured tool bundle, an Ed25519-signed approval, a restricted Docker worker and an external simulated-spending broker. The worker requests an action through stdout; only the broker can debit its SQLite ledger. Modified bundles, forged or revoked approvals, changed worker requests and conflicting replay are rejected. A valid replay returns the stored receipt without another debit.
+
+This is a bounded local experiment for one `simulate_purchase` capability. It is not a production sandbox, malware-free certificate, provenance service or real payment integration. `npm start` still runs the original HTTP/UI demo below; those endpoints are **not** wrapped by the new executor.
+
+With Node.js 24+, Python 3.8+, Linux x64 and a trusted local Docker daemon:
+
+```sh
+# Build from the current trusted Node and host libraries; this mode downloads nothing.
+IMAGE=$(python3 tools/build-worker-runtime.py --node-binary "$(command -v node)" --cache-dir data/worker-runtime)
+AGENTTRUST_TEST_DOCKER_IMAGE="$IMAGE" npm test
+npm run enforced:demo -- --image "$IMAGE"
+```
+
+The demo generates in-memory signing keys and automated sample approvals. It runs a real restricted worker, verifies a signed simulated receipt, checks replay/tampering/forgery/revocation, and saves a report under ignored `data/enforced-demo/`. This is not independent human approval. Ordinary tests explicitly skip the Docker cases unless `AGENTTRUST_TEST_DOCKER_IMAGE` is set.
+
+See [the executor design and limits](docs/enforced-executor.md), [runtime build and containment tests](docs/worker-runtime.md), and [concepts backlog](docs/concepts.md).
+
 ## Run on Ubuntu, Windows or macOS
 
 Requires Node.js 24 or later. No package installation, third-party dependencies or cloud account required.

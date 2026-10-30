@@ -1,5 +1,6 @@
 data/
 node_modules/
+.cache/
 *.sqlite*
 *.pem
 demo-approval.json
