@@ -1,12 +1,29 @@
 # AgentTrust — local spending authorization prototype
 
+![AgentTrust spend demo: request → decide → simulate → verify.](docs/assets/overview.svg)
+
+**A local sandbox for exploring authorization, human review and signed evidence.**
+
+[Quick start](#quick-start) · [Trust boundaries](#trust-boundaries) · [AgentTrust projects](#agenttrust-projects)
+
+<details>
+<summary>Watch the illustrated flow (short animation)</summary>
+
+![Illustrated request → decide → simulate → verify flow. Conceptual diagram, not a recording.](docs/assets/flow.gif)
+
+The animation illustrates the documented workflow, not a live execution or a security guarantee. The static overview above contains the same information.
+
+</details>
+
 Experimental open-source prototype. Working name only. This demonstrates policy-controlled AI-agent spending with simulated payments. It is not a production financial service, comprehensive malware detector, or general agent firewall. A local heuristic artifact inspector and policy-gate demonstration are also included.
 
-## Run on Ubuntu, Windows or macOS
+## Quick start
+
+Run on Ubuntu, Windows or macOS.
 
 Requires Node.js 24 or later. No package installation, third-party dependencies or cloud account required.
 
-1. Extract this ZIP and open a terminal in `agenttrust-spend-demo`.
+1. Clone this repository or extract its ZIP, then open a terminal in `agenttrust-spend-demo`.
 2. Run `npm test`.
 3. Run `npm start`.
 4. Open http://127.0.0.1:8080.
@@ -31,7 +48,7 @@ Tokens and signing keys are generated locally at first start. Never send these f
 
 Amounts are integer USD cents; initial budget is $100 per demo tenant. Authorization does not reserve budget. At execution the transaction atomically checks and debits it; this intentionally allows authorization to later fail if another request spent the budget. Simulator execution has no external side effect and therefore runs within the database transaction; real providers need a separate reservation/outbox/reconciliation design.
 
-## Security and implementation limits
+## Trust boundaries
 
 This first slice uses native JavaScript modules on Node 24 rather than the proposed TypeScript/PostgreSQL stack, to keep it dependency-free and runnable. SQLite support in Node may emit an experimental warning.
 
@@ -42,6 +59,10 @@ No reimbursement app, real payments, provider credentials, receipt uploads or wo
 ## Verified tests
 
 `npm test` exercises positive and negative decisions, approval requirements, expiry, cross-tenant probing, idempotency conflicts, replayed execution, signature tampering, parallel processes competing for a shared budget, and HTTP role separation plus the full approval-to-simulation flow.
+
+## Development branch
+
+[Draft PR #1](https://github.com/TheDivine/agenttrust-spend-demo/pull/1) explores an isolated simulation broker. It is separate from the default-branch demo documented here. Do not assume those controls are available in this checkout; inspect the PR and its tests before using that branch.
 
 ## Next milestone
 
@@ -98,3 +119,15 @@ node tools/trust.mjs gate examples/skills/hello ./demo-approval.json examples/to
 ```
 
 All 13 automated tests passed locally at this milestone. See GitHub Actions for hosted results; no security audit or production-readiness claim is implied.
+
+## AgentTrust projects
+
+Three small experiments, with different boundaries:
+
+| Project | Focus | Important limit |
+| --- | --- | --- |
+| [Spend Demo](https://github.com/TheDivine/agenttrust-spend-demo) | Local authorization, review and simulated payments | No real payment execution |
+| [Artifact Check](https://github.com/TheDivine/agenttrust-artifact-check) | Local inspection and digest-bound review records | Not a malware or provenance guarantee |
+| [Policy Gate](https://github.com/TheDivine/agenttrust-policy-gate) | Decisions for declared agent actions | Enforcement belongs to a trusted mediator |
+
+Start with one synthetic example. Never submit credentials, customer data or private artifacts in issues. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
