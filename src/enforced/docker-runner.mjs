@@ -64,7 +64,7 @@ export async function runIsolated(bundle, {
   const deadline = Date.now() + timeoutMs;
   const name = `agenttrust-worker-${randomUUID()}`;
   const label = 'org.agenttrust.isolated-worker=true';
-  let privateRoot, createAttempted = false, result, failure;
+  let privateRoot, createAttempted = false, cleanupUnconfirmed = false, result, failure;
   const invoke = (args, options = {}) => command(dockerBinary, args, {
     timeoutMs: deadline - Date.now(), maxOutputBytes: 65536, signal, ...options,
   });
@@ -119,6 +119,7 @@ export async function runIsolated(bundle, {
           timeoutMs: 5000, maxOutputBytes: 65536,
         });
       } catch {
+        cleanupUnconfirmed = true;
         // A lost create response does not prove the daemon failed to create it.
         failure = new Error(`Worker cleanup not confirmed; inspect container ${name}`, { cause: failure });
       }
@@ -128,6 +129,10 @@ export async function runIsolated(bundle, {
       catch { failure = new Error('Worker snapshot cleanup failed', { cause: failure }); }
     }
   }
-  if (failure) { failure.workerContainer = name; throw failure; }
+  if (failure) {
+    failure.workerContainer = name;
+    if (cleanupUnconfirmed) failure.workerCleanupUnconfirmed = true;
+    throw failure;
+  }
   return result;
 }

@@ -151,3 +151,62 @@ test('real Docker worker plus signed approval plus broker execution', { skip: !p
   assert.equal(broker.remainingCents(), 8800);
   assert.deepEqual(await broker.execute(bundle, approval), receipt);
 });
+
+test('worker admission is bounded; replay shares a slot and completion releases capacity', async t => {
+  const waiting = [];
+  const { broker, bundle, approve } = setup(t, {
+    maxConcurrentWorkers: 1,
+    runner: (_, { input }) => new Promise(resolve => waiting.push(() => resolve({ stdout: JSON.stringify(input.action), exitCode: 0 }))),
+  });
+  const approval = approve('slot-one', 100);
+  const first = broker.execute(bundle, approval);
+  const replay = broker.execute(bundle, approval);
+  assert.equal(first, replay);
+  try {
+    await assert.rejects(broker.execute(bundle, approve('slot-two', 100)), /capacity/);
+    const forged = approve('forged-at-capacity', 100);
+    forged.signature = Buffer.alloc(64).toString('base64');
+    await assert.rejects(broker.execute(bundle, forged), /signature/);
+    assert.equal(waiting.length, 1);
+    assert.equal(broker.remainingCents(), 10000);
+  } finally { for (const release of waiting.splice(0)) release(); await first; }
+  const second = broker.execute(bundle, approve('slot-two', 100));
+  // Completed replay must not be blocked while another worker occupies the slot.
+  assert.deepEqual(await broker.execute(bundle, approval), await first);
+  await Promise.resolve();
+  waiting.shift()(); await second;
+  assert.equal(broker.remainingCents(), 9800);
+});
+
+test('failed workers release admission capacity without a debit', async t => {
+  let calls = 0;
+  const { broker, bundle, approve } = setup(t, { maxConcurrentWorkers: 1,
+    runner: async (_, { input }) => { if (++calls === 1) throw Error('synthetic failure'); return { stdout: JSON.stringify(input.action), exitCode: 0 }; },
+  });
+  await assert.rejects(broker.execute(bundle, approve('failed-slot')), /synthetic failure/);
+  await broker.execute(bundle, approve('retry-slot'));
+  assert.equal(calls, 2); assert.equal(broker.remainingCents(), 8800);
+});
+
+test('worker admission configuration is a bounded positive integer', t => {
+  const keys = generateKeyPairSync('ed25519');
+  for (const maxConcurrentWorkers of [0, -1, 1.5, Infinity, NaN, 33, '4', null]) {
+    assert.throws(() => new EnforcedBroker({ principal: 'test', publicKeys: { reviewer: keys.publicKey }, maxConcurrentWorkers }), /worker limit/);
+  }
+});
+
+test('unconfirmed container cleanup blocks new workers without blocking stored replay', async t => {
+  let calls = 0;
+  const { broker, bundle, approve } = setup(t, { maxConcurrentWorkers: 1,
+    runner: async (_, { input }) => {
+      if (++calls === 2) throw Object.assign(Error('Worker cleanup not confirmed'), { workerCleanupUnconfirmed: true });
+      return { stdout: JSON.stringify(input.action), exitCode: 0 };
+    },
+  });
+  const approval = approve('stored');
+  const receipt = await broker.execute(bundle, approval);
+  await assert.rejects(broker.execute(bundle, approve('orphan')), /cleanup not confirmed/);
+  await assert.rejects(broker.execute(bundle, approve('after-orphan')), /cleanup unconfirmed/);
+  assert.deepEqual(await broker.execute(bundle, approval), receipt);
+  assert.equal(calls, 2); assert.equal(broker.remainingCents(), 8800);
+});

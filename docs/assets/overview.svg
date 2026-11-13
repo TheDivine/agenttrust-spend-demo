@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430" role="img" aria-labelledby="title desc">
+<title id="title">AgentTrust SPEND DEMO overview</title>
+<desc id="desc">Explore spending boundaries before real money moves. 01: REQUEST, $12 / $30 / $120 → 02: DECIDE, Allow · review · deny → 03: SIMULATE, Revalidate + debit → 04: VERIFY, Signed receipt. Local simulation only. No real payment provider. No production financial service.</desc>
+<rect width="1200" height="430" rx="24" fill="#0c1424"/>
+<g font-family="system-ui, sans-serif">
+<text x="48" y="49" fill="#5de2c4" font-size="17" font-weight="700" letter-spacing="3">AGENTTRUST / EXPERIMENTAL</text>
+<text x="48" y="108" fill="#f4f7ff" font-size="42" font-weight="750">SPEND DEMO</text>
+<text x="48" y="146" fill="#b6c5dc" font-size="22">Explore spending boundaries before real money moves.</text>
+<rect x="48" y="193" width="258" height="128" rx="14" fill="#162238" stroke="#31445f"/>
+<text x="68" y="226" fill="#5de2c4" font-size="15" font-weight="700">01</text>
+<text x="68" y="261" fill="#f4f7ff" font-size="21" font-weight="700">REQUEST</text>
+<text x="68" y="293" fill="#b6c5dc" font-size="16">$12 / $30 / $120</text>
+<path d="M 311 254 h 14 m -5 -5 l 5 5 l -5 5" stroke="#5de2c4" fill="none" stroke-width="2"/>
+<rect x="330" y="193" width="258" height="128" rx="14" fill="#162238" stroke="#31445f"/>
+<text x="350" y="226" fill="#5de2c4" font-size="15" font-weight="700">02</text>
+<text x="350" y="261" fill="#f4f7ff" font-size="21" font-weight="700">DECIDE</text>
+<text x="350" y="293" fill="#b6c5dc" font-size="16">Allow · review · deny</text>
+<path d="M 593 254 h 14 m -5 -5 l 5 5 l -5 5" stroke="#5de2c4" fill="none" stroke-width="2"/>
+<rect x="612" y="193" width="258" height="128" rx="14" fill="#162238" stroke="#31445f"/>
+<text x="632" y="226" fill="#5de2c4" font-size="15" font-weight="700">03</text>
+<text x="632" y="261" fill="#f4f7ff" font-size="21" font-weight="700">SIMULATE</text>
+<text x="632" y="293" fill="#b6c5dc" font-size="16">Revalidate + debit</text>
+<path d="M 875 254 h 14 m -5 -5 l 5 5 l -5 5" stroke="#5de2c4" fill="none" stroke-width="2"/>
+<rect x="894" y="193" width="258" height="128" rx="14" fill="#162238" stroke="#31445f"/>
+<text x="914" y="226" fill="#5de2c4" font-size="15" font-weight="700">04</text>
+<text x="914" y="261" fill="#f4f7ff" font-size="21" font-weight="700">VERIFY</text>
+<text x="914" y="293" fill="#b6c5dc" font-size="16">Signed receipt</text>
+<text x="48" y="380" fill="#b6c5dc" font-size="17">Local simulation only. No real payment provider. No production financial service.</text>
+</g></svg>

@@ -26,17 +26,20 @@ export class EnforcedBroker {
   #policyVersion;
   #publicKeys;
   #maxAmount;
+  #maxConcurrentWorkers;
   #receiptKeys;
   #runner;
   #clock;
   #inflight = new Map();
+  #workerCleanupUnconfirmed = false;
 
   constructor({ databasePath = ':memory:', principal, policyVersion = 'local-v1', publicKeys,
-    maxAmountCents = 5000, initialBudgetCents = 10000,
+    maxAmountCents = 5000, initialBudgetCents = 10000, maxConcurrentWorkers = 4,
     receiptKeys = generateKeyPairSync('ed25519'), runner = runIsolated, clock = Date.now } = {}) {
     if (!label(principal) || !(label(policyVersion) || Number.isSafeInteger(policyVersion) && policyVersion > 0)) throw Error('Invalid broker identity or policy version');
     if (!publicKeys || typeof publicKeys !== 'object' || !Object.keys(publicKeys).length) throw Error('Trusted approval keys required');
     if (!Number.isSafeInteger(maxAmountCents) || maxAmountCents < 1 || !Number.isSafeInteger(initialBudgetCents) || initialBudgetCents < 0) throw Error('Invalid budget limits');
+    if (!Number.isInteger(maxConcurrentWorkers) || maxConcurrentWorkers < 1 || maxConcurrentWorkers > 32) throw Error('Invalid concurrent worker limit');
     if (typeof runner !== 'function' || typeof clock !== 'function') throw Error('Invalid trusted host configuration');
     if (receiptKeys.privateKey?.asymmetricKeyType !== 'ed25519' || receiptKeys.publicKey?.asymmetricKeyType !== 'ed25519') throw Error('Ed25519 receipt keys required');
     if (!createPublicKey(receiptKeys.privateKey).export({ type: 'spki', format: 'der' })
@@ -51,6 +54,7 @@ export class EnforcedBroker {
     this.#principal = principal;
     this.#policyVersion = policyVersion;
     this.#maxAmount = maxAmountCents;
+    this.#maxConcurrentWorkers = maxConcurrentWorkers;
     this.#receiptKeys = receiptKeys;
     this.#runner = runner;
     this.#clock = clock;
@@ -110,11 +114,14 @@ export class EnforcedBroker {
         return inflight.promise;
       }
       if (payload.action.amountCents > this.remainingCents()) throw Error('Budget unavailable');
+      if (this.#workerCleanupUnconfirmed) throw Error('Worker cleanup unconfirmed; inspect runtime before creating a new broker');
+      if (this.#inflight.size >= this.#maxConcurrentWorkers) throw Error('Worker capacity unavailable; retry after an active execution finishes');
     } catch (error) {
       this.#event(envelope?.payload?.approvalId, 'DENIED_BEFORE_WORKER');
       return Promise.reject(error);
     }
-    const promise = this.#run(captured, envelope, payload, fingerprint)
+    // Reserve the map slot before invoking even a synchronous custom runner.
+    const promise = Promise.resolve().then(() => this.#run(captured, envelope, payload, fingerprint))
       .finally(() => this.#inflight.delete(payload.approvalId));
     this.#inflight.set(payload.approvalId, { fingerprint, promise });
     return promise;
@@ -159,6 +166,7 @@ export class EnforcedBroker {
         throw error;
       }
     } catch (error) {
+      if (error?.workerCleanupUnconfirmed === true) this.#workerCleanupUnconfirmed = true;
       this.#event(id, 'NO_SIMULATED_EFFECT');
       throw error;
     }

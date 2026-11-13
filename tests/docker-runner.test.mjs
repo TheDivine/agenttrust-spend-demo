@@ -104,3 +104,17 @@ console.log(JSON.stringify({uid:process.getuid(),pid:process.pid,bundleWriteDeni
     assert.match(error.message, /aborted/); gone(error.workerContainer);
   });
 });
+
+test('runner marks unconfirmed container cleanup for fail-closed broker admission', async t => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'agenttrust-fake-docker-'));
+  t.after(() => fs.rm(dir, { recursive: true, force: true }));
+  const binary = path.join(dir, 'docker');
+  // Synthetic CLI fixture, not a containment test or a real Docker daemon.
+  await fs.writeFile(binary, `#!${process.execPath}\nconst command = process.argv[2];\nif (command === 'image') console.log(JSON.stringify({ Env: [] }));\nelse if (command === 'start') console.log('{}');\nelse if (command === 'rm') process.exit(1);\n`, { mode: 0o700 });
+  await assert.rejects(runIsolated(bundle(echo), { dockerBinary: binary }), error => {
+    assert.match(error.message, /cleanup not confirmed/);
+    assert.equal(error.workerCleanupUnconfirmed, true);
+    assert.match(error.workerContainer, /^agenttrust-worker-/);
+    return true;
+  });
+});
