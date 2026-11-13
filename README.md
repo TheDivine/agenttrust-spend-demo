@@ -17,6 +17,25 @@ The animation illustrates the documented workflow, not a live execution or a sec
 
 Experimental open-source prototype. Working name only. This demonstrates policy-controlled AI-agent spending with simulated payments. It is not a production financial service, comprehensive malware detector, or general agent firewall. A local heuristic artifact inspector and policy-gate demonstration are also included.
 
+## Enforced executor experiment
+
+The new CLI/library path connects a captured tool bundle, an Ed25519-signed approval, a restricted Docker worker and an external simulated-spending broker. The worker requests an action through stdout; only the broker can debit its SQLite ledger. Modified bundles, forged or revoked approvals, changed worker requests and conflicting replay are rejected. A valid replay returns the stored receipt without another debit.
+
+This is a bounded local experiment for one `simulate_purchase` capability. It is not a production sandbox, malware-free certificate, provenance service or real payment integration. `npm start` still runs the original HTTP/UI demo below; those endpoints are **not** wrapped by the new executor.
+
+With Node.js 24+, Python 3.8+, Linux x64 and a trusted local Docker daemon:
+
+```sh
+# Build from the current trusted Node and host libraries; this mode downloads nothing.
+IMAGE=$(python3 tools/build-worker-runtime.py --node-binary "$(command -v node)" --cache-dir data/worker-runtime)
+AGENTTRUST_TEST_DOCKER_IMAGE="$IMAGE" npm test
+npm run enforced:demo -- --image "$IMAGE"
+```
+
+The demo generates in-memory signing keys and automated sample approvals. It runs a real restricted worker, verifies a signed simulated receipt, checks replay/tampering/forgery/revocation, and saves a report under ignored `data/enforced-demo/`. This is not independent human approval. Ordinary tests explicitly skip the Docker cases unless `AGENTTRUST_TEST_DOCKER_IMAGE` is set.
+
+See [the executor design and limits](docs/enforced-executor.md), [runtime build and containment tests](docs/worker-runtime.md), and [concepts backlog](docs/concepts.md).
+
 ## Quick start
 
 Run on Ubuntu, Windows or macOS.
@@ -35,7 +54,7 @@ Requires Node.js 24 or later. No package installation, third-party dependencies 
 
 Tokens and signing keys are generated locally at first start. Never send these files to anyone or commit `data/`. Keep the service on loopback; no tunnels, shared hosting or production deployment. To reset the demo, stop the server and remove `data/` (this discards the local demo records and key).
 
-## Implemented
+## Implemented in the HTTP/UI demo
 
 - Two separate demo roles, enforced by HTTP handlers.
 - Deterministic vendor, currency, per-payment and remaining-budget checks.
@@ -60,9 +79,9 @@ No reimbursement app, real payments, provider credentials, receipt uploads or wo
 
 `npm test` exercises positive and negative decisions, approval requirements, expiry, cross-tenant probing, idempotency conflicts, replayed execution, signature tampering, parallel processes competing for a shared budget, and HTTP role separation plus the full approval-to-simulation flow.
 
-## Development branch
+## Executor development
 
-[Draft PR #1](https://github.com/TheDivine/agenttrust-spend-demo/pull/1) explores an isolated simulation broker. It is separate from the default-branch demo documented here. Do not assume those controls are available in this checkout; inspect the PR and its tests before using that branch.
+This checkout includes the isolated simulation broker introduced in [draft PR #1](https://github.com/TheDivine/agenttrust-spend-demo/pull/1). Its CLI/library path is separate from the original HTTP/UI demo: starting the web server does not enable the executor controls. Review the executor design and current CI results before experimenting.
 
 ## Next milestone
 
@@ -98,8 +117,9 @@ What paid tools do your agents use today? Where do approvals block your workflow
 
 - Implemented: local spend simulator, deterministic decisions, manual approvals, signed receipts and tests.
 - Implemented: local artifact manifest/digest inspection, explicit review records, change detection and hypothetical tool-request policy decisions.
-- Next: independent signed-receipt verifier and authenticated scoped machine authorizations.
-- Research: approvals bound to exact skill/artifact digests, integrating existing scanners, runtime enforcement.
+- Implemented in the separate executor: digest-bound signed approvals, scoped simulated actions, persistent local revocation, restricted Docker execution and receipt verification.
+- Next: portable evidence and production identity design, subject to buyer validation.
+- Research: integrating existing scanners and independent isolation boundaries.
 - Not implemented: comprehensive skill/malware detection, registry/dependency analysis, runtime firewall enforcement, provider settlement or blockchain anchoring.
 
 ## License
@@ -118,7 +138,7 @@ node tools/trust.mjs verify examples/skills/hello ./demo-approval.json
 node tools/trust.mjs gate examples/skills/hello ./demo-approval.json examples/tool-request.json examples/gate-policy.json
 ```
 
-All 13 automated tests passed locally at this milestone. See GitHub Actions for hosted results; no security audit or production-readiness claim is implied.
+See GitHub Actions for results tied to a specific commit. Ordinary tests skip real Docker checks unless a runtime image is configured; no security audit or production-readiness claim is implied.
 
 ## AgentTrust projects
 

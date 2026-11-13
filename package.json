@@ -5,7 +5,9 @@
   "scripts": {
     "start": "node src/server.mjs",
     "test": "node --test tests/*.test.mjs",
-    "inspect:demo": "node tools/trust.mjs inspect examples/skills/hello"
+    "inspect:demo": "node tools/trust.mjs inspect examples/skills/hello",
+    "enforced:demo": "node tools/enforced-demo.mjs",
+    "test:enforced": "node --test tests/bundle-approval.test.mjs tests/enforced-broker.test.mjs tests/docker-runner.test.mjs"
   },
   "engines": {
     "node": ">=24"
